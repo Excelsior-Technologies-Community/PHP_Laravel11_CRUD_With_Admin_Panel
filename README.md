@@ -77,21 +77,35 @@ Run migration:
 php artisan migrate
 
 📦 Model
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
 class Product extends Model
 {
+    use HasFactory;
     protected $fillable = [
-        'name', 'details', 'price',
-        'size', 'color', 'category', 'image'
+        'name',
+        'details',
+        'price',
+        'size',
+        'color',
+        'category',
+        'image',
     ];
-}
+
 
 🚏 Routes
-Route::middleware(['auth'])->group(function () {
-    Route::resource('products', ProductController::class);
-});
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CustomerProductsController;
+Route::get('/customer/products', [CustomerProductsController::class, 'index'])->name('customer.products');
 
-Route::get('/customer/products', [CustomerProductsController::class, 'index'])
-    ->name('customer.products');
+
+Route::resource('/customer/products',customerController::class);
+
 
 🧠 Controller (Important Methods)
 📌 Display Products
