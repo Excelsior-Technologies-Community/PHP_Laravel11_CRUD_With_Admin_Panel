@@ -1,59 +1,200 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+🛒 Laravel 11 Product CRUD + Admin Panel + Customer Products
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
 
-## About Laravel
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-## Learning Laravel
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+⭐ Overview
 
-## Laravel Sponsors
+This project demonstrates how to build a complete Product CRUD System with:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Laravel 11
 
-### Premium Partners
+Admin Panel (Bootstrap UI)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Customer Product Page
 
-## Contributing
+Authentication (Laravel Breeze)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Image Upload System
 
-## Code of Conduct
+Reusable Layouts (Admin + Customer)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+⭐ Features
 
-## Security Vulnerabilities
+Product CRUD
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Image Upload
 
-## License
+Admin Authentication
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Pagination
+
+Separate Customer Product View
+
+Clean Blade Layout System
+
+📂 Folder Structure
+LARAVEL_PRODUCT_CRUD/
+│
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── ProductController.php
+│   │   │   ├── CustomerProductsController.php
+│   ├── Models/
+│   │   └── Product.php
+│
+├── database/
+│   ├── migrations/
+│   │   └── create_products_table.php
+│
+├── public/
+│   └── images/
+│
+├── resources/
+│   ├── views/
+│   │   ├── layouts/
+│   │   │   ├── admin.blade.php
+│   │   │   ├── customer.blade.php
+│   │   ├── products/
+│   │   │   ├── index.blade.php
+│   │   │   ├── create.blade.php
+│   │   │   ├── edit.blade.php
+│   │   └── customer/
+│   │       └── index.blade.php
+│
+├── routes/
+│   └── web.php
+│
+└── README.md
+
+🛠 Installation
+composer create-project laravel/laravel product-crud
+cd product-crud
+
+🌎 Environment Setup
+
+Update .env:
+
+DB_DATABASE=your_db
+DB_USERNAME=root
+DB_PASSWORD=root
+
+🧱 Migration
+php artisan make:migration create_products_table --create=products
+
+
+Migration fields:
+
+name
+
+details
+
+price
+
+size
+
+color
+
+category
+
+image
+
+Run migration:
+
+php artisan migrate
+
+📦 Model
+class Product extends Model
+{
+    protected $fillable = [
+        'name', 'details', 'price',
+        'size', 'color', 'category', 'image'
+    ];
+}
+
+🚏 Routes
+Route::middleware(['auth'])->group(function () {
+    Route::resource('products', ProductController::class);
+});
+
+Route::get('/customer/products', [CustomerProductsController::class, 'index'])
+    ->name('customer.products');
+
+🧠 Controller (Important Methods)
+📌 Display Products
+public function index() {
+    $products = Product::latest()->paginate(10);
+    return view('products.index', compact('products'));
+}
+
+📌 Store Product
+public function store(Request $request)
+{
+    $imageName = time() . '_' . $request->image->getClientOriginalName();
+    $request->image->move(public_path('images'), $imageName);
+
+    Product::create([
+        'name'=>$request->name,
+        'details'=>$request->details,
+        'price'=>$request->price,
+        'size'=>$request->size,
+        'color'=>$request->color,
+        'category'=>$request->category,
+        'image'=>'images/'.$imageName
+    ]);
+}
+
+🎨 Blade Layout System
+1️⃣ Admin Layout (admin.blade.php)
+<!DOCTYPE html>
+<html>
+<head>
+ <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+ @include('layouts.navigation')
+
+ <div class="container py-4">
+     @yield('content')
+ </div>
+
+</body>
+</html>
+
+2️⃣ Customer Layout
+
+Same as screenshot style.
+
+📄 Blade Pages
+✔ index.blade.php
+
+Product listing table.
+
+✔ create.blade.php
+
+Product form.
+
+✔ edit.blade.php
+
+Edit page.
+
+▶ Run Application
+php artisan serve
+
+
+Visit:
+
+http://127.0.0.1:8000/products
+<img width="676" height="213" alt="image" src="https://github.com/user-attachments/assets/ae71636f-dadf-454c-b516-0dd0a373ea9d" />
+
+
+Customer:
+
+http://127.0.0.1:8000/customer/products
+<img width="471" height="269" alt="image" src="https://github.com/user-attachments/assets/b88ed207-176e-4e56-abef-f3898ab95d31" />
