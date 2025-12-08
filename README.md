@@ -37,40 +37,8 @@ Separate Customer Product View
 
 Clean Blade Layout System
 
-📂 Folder Structure
-LARAVEL_PRODUCT_CRUD/
-│
-├── app/
-│   ├── Http/
-│   │   ├── Controllers/
-│   │   │   ├── ProductController.php
-│   │   │   ├── CustomerProductsController.php
-│   ├── Models/
-│   │   └── Product.php
-│
-├── database/
-│   ├── migrations/
-│   │   └── create_products_table.php
-│
-├── public/
-│   └── images/
-│
-├── resources/
-│   ├── views/
-│   │   ├── layouts/
-│   │   │   ├── admin.blade.php
-│   │   │   ├── customer.blade.php
-│   │   ├── products/
-│   │   │   ├── index.blade.php
-│   │   │   ├── create.blade.php
-│   │   │   ├── edit.blade.php
-│   │   └── customer/
-│   │       └── index.blade.php
-│
-├── routes/
-│   └── web.php
-│
-└── README.md
+<img width="609" height="702" alt="image" src="https://github.com/user-attachments/assets/a9d65b4f-df32-457f-8052-2327891e2c7f" />
+
 
 🛠 Installation
 composer create-project laravel/laravel product-crud
