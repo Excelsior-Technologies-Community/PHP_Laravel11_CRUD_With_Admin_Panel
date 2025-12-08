@@ -1,92 +1,133 @@
-🛒 Laravel 11 Product CRUD + Admin Panel + Customer Products
+# 🛒 Laravel 11 Product CRUD + Admin Panel + Customer Products
 
+![Laravel](https://img.shields.io/badge/Laravel-11-orange)
+![PHP](https://img.shields.io/badge/PHP-8.2-blue)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-5-purple)
+![MySQL](https://img.shields.io/badge/Database-MySQL-yellow)
 
+---
 
+## ⭐ Overview
 
+This project demonstrates a complete **Product CRUD + Admin Panel + Customer Product Listing** built using Laravel 11 and Bootstrap UI.
 
+It includes:
+- Product CRUD  
+- Image Upload  
+- Admin Authentication (Laravel Breeze)  
+- Bootstrap Admin Panel  
+- Customer Product Page  
+- Fully Responsive Layouts  
+- Modern Folder Structure  
 
+---
 
+## ⭐ Features
 
-⭐ Overview
+- Add / Edit / Delete Products  
+- Upload Product Images  
+- Pagination  
+- Admin-only Access  
+- Customer Product Page  
+- Separate Admin & Customer Layouts  
+- Clean UI  
 
-This project demonstrates how to build a complete Product CRUD System with:
+---
 
-Laravel 11
+## 📂 Folder Structure
 
-Admin Panel (Bootstrap UI)
+```
+LARAVEL_PRODUCT_CRUD/
+│
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── ProductController.php
+│   │   │   ├── CustomerProductsController.php
+│   ├── Models/
+│   │   └── Product.php
+│
+├── database/
+│   ├── migrations/
+│   │   └── create_products_table.php
+│
+├── public/
+│   └── images/
+│
+├── resources/
+│   ├── views/
+│   │   ├── layouts/
+│   │   │   ├── admin.blade.php
+│   │   │   ├── customer.blade.php
+│   │   ├── products/
+│   │   │   ├── index.blade.php
+│   │   │   ├── create.blade.php
+│   │   │   ├── edit.blade.php
+│   │   └── customer/
+│   │       └── index.blade.php
+│
+├── routes/
+│   └── web.php
+│
+└── README.md
+```
 
-Customer Product Page
+---
 
-Authentication (Laravel Breeze)
+## 🛠 Installation
 
-Image Upload System
-
-Reusable Layouts (Admin + Customer)
-
-⭐ Features
-
-Product CRUD
-
-Image Upload
-
-Admin Authentication
-
-Pagination
-
-Separate Customer Product View
-
-Clean Blade Layout System
-
-<img width="609" height="702" alt="image" src="https://github.com/user-attachments/assets/a9d65b4f-df32-457f-8052-2327891e2c7f" />
-
-
-🛠 Installation
+```bash
 composer create-project laravel/laravel product-crud
 cd product-crud
+```
 
-🌎 Environment Setup
+---
 
-Update .env:
+## 🌎 Environment Setup
 
-DB_DATABASE=your_db
+Update `.env`:
+
+```
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=your_database
 DB_USERNAME=root
 DB_PASSWORD=root
+```
 
-🧱 Migration
+---
+
+## 🧱 Migration
+
+Create migration:
+
+```bash
 php artisan make:migration create_products_table --create=products
+```
 
-
-Migration fields:
-
-name
-
-details
-
-price
-
-size
-
-color
-
-category
-
-image
+Fields:
+- name  
+- details  
+- price  
+- size  
+- color  
+- category  
+- image  
 
 Run migration:
 
+```bash
 php artisan migrate
+```
 
-📦 Model
-<?php
+---
 
-namespace App\Models;
+## 📦 Model (Product)
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
+```php
 class Product extends Model
 {
-    use HasFactory;
     protected $fillable = [
         'name',
         'details',
@@ -96,46 +137,78 @@ class Product extends Model
         'category',
         'image',
     ];
+}
+```
 
+---
 
-🚏 Routes
+## 🚏 Routes
+
+```php
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CustomerProductsController;
-Route::get('/customer/products', [CustomerProductsController::class, 'index'])->name('customer.products');
 
+Route::middleware(['auth'])->group(function () {
+    Route::resource('products', ProductController::class);
+});
 
-Route::resource('/customer/products',customerController::class);
+Route::get('/customer/products', [CustomerProductsController::class, 'index'])
+    ->name('customer.products');
+```
 
+---
 
-🧠 Controller (Important Methods)
-📌 Display Products
+## 🧠 Controller (Important Methods)
+
+### 📌 Display Products  
+```php
 public function index() {
     $products = Product::latest()->paginate(10);
     return view('products.index', compact('products'));
 }
+```
 
-📌 Store Product
+### 📌 Store Product  
+```php
 public function store(Request $request)
 {
-    $imageName = time() . '_' . $request->image->getClientOriginalName();
-    $request->image->move(public_path('images'), $imageName);
+    $request->validate([
+        'name' => 'required',
+        'details' => 'required',
+        'price' => 'required',
+        'image' => 'nullable|image|max:2048'
+    ]);
+
+    if ($request->hasFile('image')) {
+        $imageName = time().'_'.$request->image->getClientOriginalName();
+        $request->image->move(public_path('images'), $imageName);
+        $imagePath = 'images/'.$imageName;
+    }
 
     Product::create([
-        'name'=>$request->name,
-        'details'=>$request->details,
-        'price'=>$request->price,
-        'size'=>$request->size,
-        'color'=>$request->color,
-        'category'=>$request->category,
-        'image'=>'images/'.$imageName
+        'name' => $request->name,
+        'details' => $request->details,
+        'price' => $request->price,
+        'size' => $request->size,
+        'color' => $request->color,
+        'category' => $request->category,
+        'image' => $imagePath ?? null,
     ]);
 }
+```
 
-🎨 Blade Layout System
-1️⃣ Admin Layout (admin.blade.php)
+---
+
+# 🎨 Blade Layout System
+
+## 1️⃣ Admin Layout (`admin.blade.php`)
+
+```blade
 <!DOCTYPE html>
 <html>
 <head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -148,35 +221,53 @@ public function store(Request $request)
 
 </body>
 </html>
+```
 
-2️⃣ Customer Layout
+---
 
-Same as screenshot style.
+## 2️⃣ Customer Layout (`customer.blade.php`)
 
-📄 Blade Pages
-✔ index.blade.php
+Simple customer view with product grid.
 
-Product listing table.
+---
 
-✔ create.blade.php
+# 📄 Blade Pages
 
-Product form.
+### ✔ `products/index.blade.php`  
+Admin product listing.
 
-✔ edit.blade.php
+### ✔ `products/create.blade.php`  
+Admin product create form.
 
-Edit page.
+### ✔ `products/edit.blade.php`  
+Admin edit form.
 
-▶ Run Application
+### ✔ `customer/index.blade.php`  
+Customer product grid view.
+
+---
+
+# ▶ Run Application
+
+```
 php artisan serve
+```
 
-
-Visit:
-
+Admin Panel:
+```
 http://127.0.0.1:8000/products
-<img width="676" height="213" alt="image" src="https://github.com/user-attachments/assets/ae71636f-dadf-454c-b516-0dd0a373ea9d" />
+```
 
-
-Customer:
-
+Customer Page:
+```
 http://127.0.0.1:8000/customer/products
-<img width="471" height="269" alt="image" src="https://github.com/user-attachments/assets/b88ed207-176e-4e56-abef-f3898ab95d31" />
+```
+
+---
+
+# 📸 Screenshots
+
+<img width="1054" height="331" alt="image" src="https://github.com/user-attachments/assets/b70bf763-3c01-4918-9f70-42d9fe3db7f8" />
+<img width="471" height="269" alt="image" src="https://github.com/user-attachments/assets/a3430f39-23aa-4532-bcd4-a48420bd3a12" />
+
+ 
