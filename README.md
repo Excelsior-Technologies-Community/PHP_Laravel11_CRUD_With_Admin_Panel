@@ -1,4 +1,4 @@
-# 🛒 Laravel 11 Product CRUD + Admin Panel + Customer Products
+ Laravel 11 Product CRUD + Admin Panel + Customer Products
 
 ![Laravel](https://img.shields.io/badge/Laravel-11-orange)
 ![PHP](https://img.shields.io/badge/PHP-8.2-blue)
@@ -7,7 +7,7 @@
 
 ---
 
-## ⭐ Overview
+ Overview
 
 This project demonstrates a complete **Product CRUD + Admin Panel + Customer Product Listing** built using Laravel 11 and Bootstrap UI.
 
@@ -22,7 +22,7 @@ It includes:
 
 ---
 
-## ⭐ Features
+ Features
 
 - Add / Edit / Delete Products  
 - Upload Product Images  
@@ -34,7 +34,7 @@ It includes:
 
 ---
 
-## 📂 Folder Structure
+ Folder Structure
 
 ```
 LARAVEL_PRODUCT_CRUD/
@@ -74,7 +74,7 @@ LARAVEL_PRODUCT_CRUD/
 
 ---
 
-## 🛠 Installation
+ Installation
 
 ```bash
 composer create-project laravel/laravel product-crud
@@ -83,7 +83,7 @@ cd product-crud
 
 ---
 
-## 🌎 Environment Setup
+ Environment Setup
 
 Update `.env`:
 
@@ -98,7 +98,7 @@ DB_PASSWORD=root
 
 ---
 
-## 🧱 Migration
+ Migration
 
 Create migration:
 
@@ -123,7 +123,7 @@ php artisan migrate
 
 ---
 
-## 📦 Model (Product)
+ Model (Product)
 
 ```php
 class Product extends Model
@@ -142,7 +142,7 @@ class Product extends Model
 
 ---
 
-## 🚏 Routes
+ Routes
 
 ```php
 use App\Http\Controllers\ProductController;
@@ -158,9 +158,9 @@ Route::get('/customer/products', [CustomerProductsController::class, 'index'])
 
 ---
 
-## 🧠 Controller (Important Methods)
+ Controller (Important Methods)
 
-### 📌 Display Products  
+ Display Products  
 ```php
 public function index() {
     $products = Product::latest()->paginate(10);
@@ -168,7 +168,7 @@ public function index() {
 }
 ```
 
-### 📌 Store Product  
+ Store Product  
 ```php
 public function store(Request $request)
 {
@@ -199,9 +199,9 @@ public function store(Request $request)
 
 ---
 
-# 🎨 Blade Layout System
+ Blade Layout System
 
-## 1️⃣ Admin Layout (`admin.blade.php`)
+ Admin Layout (`admin.blade.php`)
 
 ```blade
 <!DOCTYPE html>
@@ -225,29 +225,29 @@ public function store(Request $request)
 
 ---
 
-## 2️⃣ Customer Layout (`customer.blade.php`)
+ Customer Layout (`customer.blade.php`)
 
 Simple customer view with product grid.
 
 ---
 
-# 📄 Blade Pages
+ Blade Pages
 
-### ✔ `products/index.blade.php`  
+`products/index.blade.php`  
 Admin product listing.
 
-### ✔ `products/create.blade.php`  
+ `products/create.blade.php`  
 Admin product create form.
 
-### ✔ `products/edit.blade.php`  
+`products/edit.blade.php`  
 Admin edit form.
 
-### ✔ `customer/index.blade.php`  
+ `customer/index.blade.php`  
 Customer product grid view.
 
 ---
 
-# ▶ Run Application
+ Run Application
 
 ```
 php artisan serve
@@ -265,7 +265,7 @@ http://127.0.0.1:8000/customer/products
 
 ---
 
-# 📸 Screenshots
+ Screenshots
 
 <img width="1054" height="331" alt="image" src="https://github.com/user-attachments/assets/b70bf763-3c01-4918-9f70-42d9fe3db7f8" />
 <img width="471" height="269" alt="image" src="https://github.com/user-attachments/assets/a3430f39-23aa-4532-bcd4-a48420bd3a12" />
