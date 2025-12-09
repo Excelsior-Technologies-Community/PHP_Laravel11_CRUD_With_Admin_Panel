@@ -1,269 +1,328 @@
- Laravel 11 Product CRUD + Admin Panel + Customer Products
+# PHP_Laravel11_CRUD_With_Admin_Panel
 
-![Laravel](https://img.shields.io/badge/Laravel-11-orange)
-![PHP](https://img.shields.io/badge/PHP-8.2-blue)
-![Bootstrap](https://img.shields.io/badge/Bootstrap-5-purple)
-![MySQL](https://img.shields.io/badge/Database-MySQL-yellow)
+This guide walks you step-by-step through creating a full CRUD application in Laravel 11 for managing products, including image uploading, admin authentication, and a customer product page.
 
 ---
 
- Overview
+## Step 1: Install Laravel 11
 
-This project demonstrates a complete **Product CRUD + Admin Panel + Customer Product Listing** built using Laravel 11 and Bootstrap UI.
-
-It includes:
-- Product CRUD  
-- Image Upload  
-- Admin Authentication (Laravel Breeze)  
-- Bootstrap Admin Panel  
-- Customer Product Page  
-- Fully Responsive Layouts  
-- Modern Folder Structure  
-
----
-
- Features
-
-- Add / Edit / Delete Products  
-- Upload Product Images  
-- Pagination  
-- Admin-only Access  
-- Customer Product Page  
-- Separate Admin & Customer Layouts  
-- Clean UI  
-
----
-
- Folder Structure
+We start with a fresh installation of Laravel 11.  
+Run the following command:
 
 ```
-LARAVEL_PRODUCT_CRUD/
-│
-├── app/
-│   ├── Http/
-│   │   ├── Controllers/
-│   │   │   ├── ProductController.php
-│   │   │   ├── CustomerProductsController.php
-│   ├── Models/
-│   │   └── Product.php
-│
-├── database/
-│   ├── migrations/
-│   │   └── create_products_table.php
-│
-├── public/
-│   └── images/
-│
-├── resources/
-│   ├── views/
-│   │   ├── layouts/
-│   │   │   ├── admin.blade.php
-│   │   │   ├── customer.blade.php
-│   │   ├── products/
-│   │   │   ├── index.blade.php
-│   │   │   ├── create.blade.php
-│   │   │   ├── edit.blade.php
-│   │   └── customer/
-│   │       └── index.blade.php
-│
-├── routes/
-│   └── web.php
-│
-└── README.md
+composer create-project laravel/laravel example-app
 ```
 
 ---
 
- Installation
+## Step 2: MySQL Database Configuration
 
-```bash
-composer create-project laravel/laravel product-crud
-cd product-crud
-```
-
----
-
- Environment Setup
-
-Update `.env`:
+Laravel 11 uses SQLite by default.  
+To use MySQL, update your **.env** file:
 
 ```
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=your_database
+DB_DATABASE=your database name (blog)
 DB_USERNAME=root
 DB_PASSWORD=root
 ```
 
 ---
 
- Migration
+## Step 3: Create Migration
 
-Create migration:
+Create a migration file:
 
-```bash
+```
 php artisan make:migration create_products_table --create=products
 ```
 
-Fields:
-- name  
-- details  
-- price  
-- size  
-- color  
-- category  
-- image  
+After creating the file in **database/migrations**, add the following schema:
+
+```php
+Schema::create('products', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->text('details');
+    $table->decimal('price', 8, 2);
+    $table->string('size');
+    $table->string('color');
+    $table->string('category');
+    $table->string('image')->nullable();
+    $table->timestamps();
+});
+```
 
 Run migration:
 
-```bash
+```
 php artisan migrate
 ```
 
 ---
 
- Model (Product)
+## Step 4: Add Resource Route
+
+In **routes/web.php**:
+
+```php
+use App\Http\Controllers\ProductController;
+
+Route::resource('products', ProductController::class);
+```
+
+---
+
+## Step 5: Add Controller and Model
+
+Create a new controller and model:
+
+```
+php artisan make:controller ProductController --resource --model=Product
+```
+
+### Product Model
 
 ```php
 class Product extends Model
 {
     protected $fillable = [
-        'name',
-        'details',
-        'price',
-        'size',
-        'color',
-        'category',
-        'image',
+        'name','details','price','size','color','category','image'
     ];
 }
 ```
 
 ---
 
- Routes
+## ProductController Code
+
+### Show all products
 
 ```php
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\CustomerProductsController;
-
-Route::middleware(['auth'])->group(function () {
-    Route::resource('products', ProductController::class);
-});
-
-Route::get('/customer/products', [CustomerProductsController::class, 'index'])
-    ->name('customer.products');
-```
-
----
-
- Controller (Important Methods)
-
- Display Products  
-```php
-public function index() {
+public function index()
+{
     $products = Product::latest()->paginate(10);
     return view('products.index', compact('products'));
 }
 ```
 
- Store Product  
+### Show create form
+
+```php
+public function create()
+{
+    return view('products.create');
+}
+```
+
+### Store product
+
 ```php
 public function store(Request $request)
 {
     $request->validate([
-        'name' => 'required',
-        'details' => 'required',
-        'price' => 'required',
-        'image' => 'nullable|image|max:2048'
+        'name' => 'required|string|max:255',
+        'details' => 'required|string',
+        'image' => 'nullable|image|max:2048',
+        'size' => 'required|string|max:50',
+        'color' => 'required|string|max:50',
+        'category' => 'required|string|max:100',
+        'price' => 'required|numeric|min:0',
     ]);
 
+    $imagePath = null;
+
     if ($request->hasFile('image')) {
-        $imageName = time().'_'.$request->image->getClientOriginalName();
-        $request->image->move(public_path('images'), $imageName);
+        $image = $request->file('image');
+        $imageName = time().'_'.$image->getClientOriginalName();
+        $image->move(public_path('images'), $imageName);
         $imagePath = 'images/'.$imageName;
     }
 
     Product::create([
         'name' => $request->name,
         'details' => $request->details,
-        'price' => $request->price,
+        'image' => $imagePath,
         'size' => $request->size,
         'color' => $request->color,
         'category' => $request->category,
-        'image' => $imagePath ?? null,
+        'price' => $request->price,
     ]);
+
+    return redirect()->route('products.index')->with('success', 'Product created successfully.');
+}
+```
+
+### Show a single product
+
+```php
+public function show(Product $product)
+{
+    return view('products.show', compact('product'));
+}
+```
+
+### Edit form
+
+```php
+public function edit(Product $product)
+{
+    return view('products.edit', compact('product'));
+}
+```
+
+### Update product
+
+```php
+public function update(Request $request, Product $product)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'details' => 'required|string',
+        'image' => 'nullable|image|max:2048',
+        'size' => 'required|string|max:50',
+        'color' => 'required|string|max:50',
+        'category' => 'required|string|max:100',
+        'price' => 'required|numeric|min:0',
+    ]);
+
+    $imagePath = $product->image;
+
+    if ($request->hasFile('image')) {
+
+        if ($product->image && file_exists(public_path($product->image))) {
+            unlink(public_path($product->image));
+        }
+
+        $image = $request->file('image');
+        $imageName = time().'_'.$image->getClientOriginalName();
+        $image->move(public_path('images'), $imageName);
+
+        $imagePath = 'images/'.$imageName;
+    }
+
+    $product->update([
+        'name' => $request->name,
+        'details' => $request->details,
+        'image' => $imagePath,
+        'size' => $request->size,
+        'color' => $request->color,
+        'category' => $request->category,
+        'price' => $request->price,
+    ]);
+
+    return redirect()->route('products.index')
+        ->with('success', 'Product updated successfully.');
+}
+```
+
+### Delete product
+
+```php
+public function destroy(Product $product)
+{
+    if ($product->image) {
+        Storage::disk('public')->delete($product->image);
+    }
+
+    $product->delete();
+
+    return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
 }
 ```
 
 ---
 
- Blade Layout System
+## Step 6: Create Blade Files
 
- Admin Layout (`admin.blade.php`)
+You must create the following:
 
-```blade
-<!DOCTYPE html>
-<html>
-<head>
- <meta charset="utf-8">
- <meta name="viewport" content="width=device-width, initial-scale=1">
- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-
- @include('layouts.navigation')
-
- <div class="container py-4">
-     @yield('content')
- </div>
-
-</body>
-</html>
+```
+resources/views/products/index.blade.php
+resources/views/products/create.blade.php
+resources/views/products/edit.blade.php
 ```
 
----
-
- Customer Layout (`customer.blade.php`)
-
-Simple customer view with product grid.
+(Your file contains full code for all three views.)
 
 ---
 
- Blade Pages
+## Layout Files Required
 
-`products/index.blade.php`  
-Admin product listing.
+### layouts/app.blade.php  
+### layouts/admin.blade.php  
 
- `products/create.blade.php`  
-Admin product create form.
-
-`products/edit.blade.php`  
-Admin edit form.
-
- `customer/index.blade.php`  
-Customer product grid view.
+(Exact code is same as your provided file.)
 
 ---
 
- Run Application
+## Run Application
 
 ```
 php artisan serve
 ```
 
-Admin Panel:
-```
-http://127.0.0.1:8000/products
-```
+Open CRUD:
 
-Customer Page:
 ```
-http://127.0.0.1:8000/customer/products
+http://localhost:8000/products
 ```
 
 ---
+
+# CRUD With Admin Panel
+
+Install Laravel Breeze for authentication:
+
+### Step 1:
+
+```
+composer require laravel/breeze --dev
+```
+
+### Step 2:
+
+```
+php artisan breeze:install blade
+```
+
+### Step 3:
+
+```
+npm install
+npm run dev
+```
+
+### Step 4:
+
+```
+php artisan migrate
+```
+
+### Step 5: Protect product routes
+
+```php
+Route::middleware(['auth'])->group(function () {
+    Route::resource('products', ProductController::class);
+});
+```
+
+### Step 6:
+
+```
+php artisan serve
+```
+
+Then login → redirect to:
+
+```
+/products
+```
+
+---
+
 
  Screenshots
 
