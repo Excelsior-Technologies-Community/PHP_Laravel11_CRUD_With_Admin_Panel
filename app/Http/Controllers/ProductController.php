@@ -11,12 +11,50 @@ class ProductController extends Controller
         SHOW ALL PRODUCTS - Displays complete list of products
         Fetches products ordered by latest created first
     ----------------------------------------*/
-    public function index()
+    public function index(Request $request)
     {
-        // Get all products sorted by creation date (newest first)
-        $products = Product::latest()->get();
-        // Return products.index view with products data
-        return view('products.index', compact('products'));
+        $query = Product::query();
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('details', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        if ($request->filled('price_min')) {
+            $query->where('price', '>=', $request->price_min);
+        }
+
+        if ($request->filled('price_max')) {
+            $query->where('price', '<=', $request->price_max);
+        }
+
+        $sort = $request->input('sort', 'latest');
+        switch ($sort) {
+            case 'price_asc':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_desc':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
+            default:
+                $query->latest();
+                break;
+        }
+
+        $products = $query->paginate(10);
+        $categories = Product::distinct()->pluck('category')->sort();
+
+        return view('products.index', compact('products', 'categories'));
     }
 
     /*---------------------------------------
@@ -132,15 +170,12 @@ class ProductController extends Controller
     ----------------------------------------*/
     public function destroy(Product $product)
     {
-        // TODO: Delete associated image file before deleting product
-        // if (file_exists(public_path($product->image))) {
-        //     unlink(public_path($product->image));
-        // }
+        if (file_exists(public_path($product->image))) {
+            unlink(public_path($product->image));
+        }
 
-        // Permanently delete product from database
         $product->delete();
 
-        // Redirect to products list with success message
         return redirect()->route('products.index')->with('success', 'Product deleted successfully');
     }
 }

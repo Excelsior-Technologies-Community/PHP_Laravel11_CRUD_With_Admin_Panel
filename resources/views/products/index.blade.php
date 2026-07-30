@@ -1,5 +1,20 @@
 @extends('layouts.admin')
 
+@section('styles')
+<style>
+    .filter-form .form-control,
+    .filter-form .form-select {
+        font-size: 0.875rem;
+        padding: 0.4rem 0.75rem;
+    }
+    .filter-form label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="container py-4">
     <!-- Header section with title and "Add New Product" button -->
@@ -12,6 +27,48 @@
     @if(session('success'))
         <div class="alert alert-success shadow-sm">{{ session('success') }}</div>
     @endif
+
+    <!-- Filter Form -->
+    <form method="GET" class="filter-form mb-4 p-3 bg-white rounded shadow-sm">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="searchInput">Search</label>
+                <input type="text" id="searchInput" name="search" class="form-control" placeholder="Search products..." value="{{ request('search') }}">
+            </div>
+            <div class="col-md-2">
+                <label for="categoryFilter">Category</label>
+                <select id="categoryFilter" name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="priceMin">Min Price (₹)</label>
+                <input type="number" id="priceMin" name="price_min" class="form-control" placeholder="Min" min="0" step="1" value="{{ request('price_min') }}">
+            </div>
+            <div class="col-md-2">
+                <label for="priceMax">Max Price (₹)</label>
+                <input type="number" id="priceMax" name="price_max" class="form-control" placeholder="Max" min="0" step="1" value="{{ request('price_max') }}">
+            </div>
+            <div class="col-md-3">
+                <label for="sortSelect">Sort By</label>
+                <select id="sortSelect" name="sort" class="form-select">
+                    <option value="latest" {{ request('sort') == 'latest' || !request('sort') ? 'selected' : '' }}>Latest</option>
+                    <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>Price: Low to High</option>
+                    <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>
+                    <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>Name: A to Z</option>
+                    <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>Name: Z to A</option>
+                </select>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-12 text-end">
+                <a href="{{ route('products.index') }}" class="btn btn-outline-secondary btn-sm">Clear Filters</a>
+            </div>
+        </div>
+    </form>
 
     <!-- Main card container for products table with shadow styling -->
     <div class="card shadow-sm border-0">
@@ -101,5 +158,28 @@
             </div>
         </div>
     </div>
+
+    {{-- PAGINATION LINKS --}}
+    <div class="mt-4">
+        {{ $products->links() }}
+    </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.querySelectorAll('.filter-form input, .filter-form select').forEach(function(el) {
+        el.addEventListener('change', function() {
+            this.closest('form') ? this.closest('form').submit() : this.form.submit();
+        });
+        el.addEventListener('input', function() {
+            if (this.type === 'text' || this.type === 'number') {
+                clearTimeout(this._debounce);
+                this._debounce = setTimeout(function() {
+                    this.closest('form') ? this.closest('form').submit() : this.form.submit();
+                }.bind(this), 500);
+            }
+        });
+    });
+</script>
+@endpush
