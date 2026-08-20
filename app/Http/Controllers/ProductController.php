@@ -7,175 +7,345 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    /*---------------------------------------
-        SHOW ALL PRODUCTS - Displays complete list of products
-        Fetches products ordered by latest created first
-    ----------------------------------------*/
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW ALL PRODUCTS
+    |--------------------------------------------------------------------------
+    */
     public function index(Request $request)
     {
         $query = Product::query();
 
+        /*
+        |--------------------------------------------------------------------------
+        | Search
+        |--------------------------------------------------------------------------
+        */
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('details', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('details', 'like', '%' . $search . '%');
+            });
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Category Filter
+        |--------------------------------------------------------------------------
+        */
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Minimum Price
+        |--------------------------------------------------------------------------
+        */
         if ($request->filled('price_min')) {
             $query->where('price', '>=', $request->price_min);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Maximum Price
+        |--------------------------------------------------------------------------
+        */
         if ($request->filled('price_max')) {
             $query->where('price', '<=', $request->price_max);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Stock Filter
+        |--------------------------------------------------------------------------
+        */
+        if ($request->filled('stock_status')) {
+
+            if ($request->stock_status === 'in_stock') {
+                $query->where('stock', '>', 0);
+            }
+
+            if ($request->stock_status === 'out_of_stock') {
+                $query->where('stock', 0);
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Status Filter
+        |--------------------------------------------------------------------------
+        */
+        if ($request->filled('status')) {
+
+            if ($request->status === 'active') {
+                $query->where('is_active', true);
+            }
+
+            if ($request->status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sorting
+        |--------------------------------------------------------------------------
+        */
         $sort = $request->input('sort', 'latest');
+
         switch ($sort) {
+
             case 'price_asc':
                 $query->orderBy('price', 'asc');
                 break;
+
             case 'price_desc':
                 $query->orderBy('price', 'desc');
                 break;
+
             case 'name_asc':
                 $query->orderBy('name', 'asc');
                 break;
+
             case 'name_desc':
                 $query->orderBy('name', 'desc');
                 break;
+
+            case 'stock_asc':
+                $query->orderBy('stock', 'asc');
+                break;
+
+            case 'stock_desc':
+                $query->orderBy('stock', 'desc');
+                break;
+
             default:
                 $query->latest();
                 break;
         }
 
-        $products = $query->paginate(10);
-        $categories = Product::distinct()->pluck('category')->sort();
+        $products = $query
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('products.index', compact('products', 'categories'));
+        $categories = Product::distinct()
+            ->pluck('category')
+            ->sort();
+
+        return view(
+            'products.index',
+            compact('products', 'categories')
+        );
     }
 
-    /*---------------------------------------
-        SHOW CREATE FORM - Displays form to add new product
-        Renders empty create form
-    ----------------------------------------*/
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE PRODUCT
+    |--------------------------------------------------------------------------
+    */
     public function create()
     {
-        // Simply return the create form view (no data needed)
         return view('products.create');
     }
 
-    /*---------------------------------------
-        STORE PRODUCT - Saves new product to database with image
-        Handles form validation, image upload, and database creation
-    ----------------------------------------*/
+    /*
+    |--------------------------------------------------------------------------
+    | STORE PRODUCT
+    |--------------------------------------------------------------------------
+    */
     public function store(Request $request)
     {
-        // Validate all required form inputs with specific rules
         $request->validate([
-            'name'      => 'required|string',        // Product name is mandatory
-            'details'   => 'nullable|string',        // Details optional
-            'price'     => 'required|numeric',       // Price must be a number
-            'size'      => 'required|string',        // Size is mandatory
-            'color'     => 'required|string',        // Color is mandatory
-            'category'  => 'required|string',        // Category is mandatory
-            'image'     => 'required|image|mimes:jpg,jpeg,png', // Image mandatory, specific formats
+            'name' => 'required|string|max:255',
+
+            'details' => 'nullable|string',
+
+            'price' => 'required|numeric|min:0',
+
+            'stock' => 'required|integer|min:0',
+
+            'size' => 'required|string|max:255',
+
+            'color' => 'required|string|max:255',
+
+            'category' => 'required|string|max:255',
+
+            'image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+
+            'is_active' => 'nullable|boolean',
         ]);
 
-        // Generate unique filename using current timestamp and move to public/images
+        /*
+        |--------------------------------------------------------------------------
+        | Upload Image
+        |--------------------------------------------------------------------------
+        */
+
         $imageName = time() . '.' . $request->image->extension();
-        $request->image->move(public_path('images'), $imageName);
 
-        // Create new product record in database with image path
+        $request->image->move(
+            public_path('images'),
+            $imageName
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Product
+        |--------------------------------------------------------------------------
+        */
+
         Product::create([
-            'name'      => $request->name,
-            'details'   => $request->details,
-            'price'     => $request->price,
-            'size'      => $request->size,
-            'color'     => $request->color,
-            'category'  => $request->category,
-            'image'     => 'images/' . $imageName,   // Store relative path in DB
+            'name' => $request->name,
+
+            'details' => $request->details,
+
+            'price' => $request->price,
+
+            'stock' => $request->stock,
+
+            'size' => $request->size,
+
+            'color' => $request->color,
+
+            'category' => $request->category,
+
+            'image' => 'images/' . $imageName,
+
+            'is_active' => $request->boolean('is_active'),
         ]);
 
-        // Redirect to products list with success message
-        return redirect()->route('products.index')->with('success', 'Product created successfully');
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product created successfully.');
     }
 
-    /*---------------------------------------
-        SHOW EDIT FORM - Displays form with existing product data
-        Loads specific product for editing
-    ----------------------------------------*/
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT PRODUCT
+    |--------------------------------------------------------------------------
+    */
     public function edit(Product $product)
     {
-        // Route model binding automatically fetches product by ID
-        // Pass product data to edit view for pre-filling form
-        return view('products.edit', compact('product'));
+        return view(
+            'products.edit',
+            compact('product')
+        );
     }
 
-    /*---------------------------------------
-        UPDATE PRODUCT - Updates existing product data
-        Handles form validation, old image deletion, new image upload
-    ----------------------------------------*/
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE PRODUCT
+    |--------------------------------------------------------------------------
+    */
     public function update(Request $request, Product $product)
     {
-        // Same validation rules as store (except image is now optional)
         $request->validate([
-            'name'      => 'required|string',
-            'details'   => 'nullable|string',
-            'price'     => 'required|numeric',
-            'size'      => 'required|string',
-            'color'     => 'required|string',
-            'category'  => 'required|string',
-            'image'     => 'nullable|image|mimes:jpg,jpeg,png', // Image now optional for updates
+            'name' => 'required|string|max:255',
+
+            'details' => 'nullable|string',
+
+            'price' => 'required|numeric|min:0',
+
+            'stock' => 'required|integer|min:0',
+
+            'size' => 'required|string|max:255',
+
+            'color' => 'required|string|max:255',
+
+            'category' => 'required|string|max:255',
+
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+
+            'is_active' => 'nullable|boolean',
         ]);
 
-        // Keep existing image path unless new one uploaded
+        /*
+        |--------------------------------------------------------------------------
+        | Keep Existing Image
+        |--------------------------------------------------------------------------
+        */
+
         $imageName = $product->image;
 
-        // If new image uploaded, replace old one
+        /*
+        |--------------------------------------------------------------------------
+        | Replace Image
+        |--------------------------------------------------------------------------
+        */
+
         if ($request->hasFile('image')) {
-            // Delete old image file from server if it exists
-            if (file_exists(public_path($product->image))) {
+
+            if (
+                $product->image &&
+                file_exists(public_path($product->image))
+            ) {
                 unlink(public_path($product->image));
             }
 
-            // Upload new image with unique name
-            $imageName = time() . '.' . $request->image->extension();
-            $request->image->move(public_path('images'), $imageName);
+            $newImageName =
+                time() . '.' .
+                $request->image->extension();
 
-            // Update with new image path
-            $imageName = 'images/' . $imageName;
+            $request->image->move(
+                public_path('images'),
+                $newImageName
+            );
+
+            $imageName = 'images/' . $newImageName;
         }
 
-        // Update all product fields in database
+        /*
+        |--------------------------------------------------------------------------
+        | Update Product
+        |--------------------------------------------------------------------------
+        */
+
         $product->update([
-            'name'      => $request->name,
-            'details'   => $request->details,
-            'price'     => $request->price,
-            'size'      => $request->size,
-            'color'     => $request->color,
-            'category'  => $request->category,
-            'image'     => $imageName,
+            'name' => $request->name,
+
+            'details' => $request->details,
+
+            'price' => $request->price,
+
+            'stock' => $request->stock,
+
+            'size' => $request->size,
+
+            'color' => $request->color,
+
+            'category' => $request->category,
+
+            'image' => $imageName,
+
+            'is_active' => $request->boolean('is_active'),
         ]);
 
-        // Redirect to products list with success message
-        return redirect()->route('products.index')->with('success', 'Product updated successfully');
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product updated successfully.');
     }
 
-    /*---------------------------------------
-        DELETE PRODUCT - Permanently removes product
-        TODO: Add image deletion logic here (missing in current code)
-    ----------------------------------------*/
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE PRODUCT
+    |--------------------------------------------------------------------------
+    */
     public function destroy(Product $product)
     {
-        if (file_exists(public_path($product->image))) {
+        if (
+            $product->image &&
+            file_exists(public_path($product->image))
+        ) {
             unlink(public_path($product->image));
         }
 
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Product deleted successfully');
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product deleted successfully.');
     }
 }
