@@ -7,6 +7,7 @@
         font-size: 0.875rem;
         padding: 0.4rem 0.75rem;
     }
+
     .filter-form label {
         font-size: 0.8rem;
         font-weight: 600;
@@ -25,7 +26,7 @@
 
     <!-- Display success message from session flash data (set by controller after CRUD operations) -->
     @if(session('success'))
-        <div class="alert alert-success shadow-sm">{{ session('success') }}</div>
+    <div class="alert alert-success shadow-sm">{{ session('success') }}</div>
     @endif
 
     <!-- Filter Form -->
@@ -40,7 +41,7 @@
                 <select id="categoryFilter" name="category" class="form-select">
                     <option value="">All Categories</option>
                     @foreach($categories as $cat)
-                        <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                    <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                     @endforeach
                 </select>
             </div>
@@ -52,16 +53,124 @@
                 <label for="priceMax">Max Price (₹)</label>
                 <input type="number" id="priceMax" name="price_max" class="form-control" placeholder="Max" min="0" step="1" value="{{ request('price_max') }}">
             </div>
-            <div class="col-md-3">
-                <label for="sortSelect">Sort By</label>
-                <select id="sortSelect" name="sort" class="form-select">
-                    <option value="latest" {{ request('sort') == 'latest' || !request('sort') ? 'selected' : '' }}>Latest</option>
-                    <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>Price: Low to High</option>
-                    <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>
-                    <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>Name: A to Z</option>
-                    <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>Name: Z to A</option>
-                </select>
-            </div>
+<div class="col-md-3">
+    <label for="sortSelect">Sort By</label>
+
+    <select
+        id="sortSelect"
+        name="sort"
+        class="form-select"
+    >
+
+        <option
+            value="latest"
+            {{ request('sort') == 'latest' || !request('sort') ? 'selected' : '' }}
+        >
+            Latest
+        </option>
+
+        <option
+            value="price_asc"
+            {{ request('sort') == 'price_asc' ? 'selected' : '' }}
+        >
+            Price: Low to High
+        </option>
+
+        <option
+            value="price_desc"
+            {{ request('sort') == 'price_desc' ? 'selected' : '' }}
+        >
+            Price: High to Low
+        </option>
+
+        <option
+            value="name_asc"
+            {{ request('sort') == 'name_asc' ? 'selected' : '' }}
+        >
+            Name: A to Z
+        </option>
+
+        <option
+            value="name_desc"
+            {{ request('sort') == 'name_desc' ? 'selected' : '' }}
+        >
+            Name: Z to A
+        </option>
+
+    </select>
+</div>
+
+
+{{-- STOCK FILTER --}}
+<div class="col-md-2">
+
+    <label for="stockStatus">
+        Stock
+    </label>
+
+    <select
+        id="stockStatus"
+        name="stock_status"
+        class="form-select"
+    >
+
+        <option value="">
+            All
+        </option>
+
+        <option
+            value="in_stock"
+            {{ request('stock_status') == 'in_stock' ? 'selected' : '' }}
+        >
+            In Stock
+        </option>
+
+        <option
+            value="out_of_stock"
+            {{ request('stock_status') == 'out_of_stock' ? 'selected' : '' }}
+        >
+            Out of Stock
+        </option>
+
+    </select>
+
+</div>
+
+
+{{-- ACTIVE STATUS FILTER --}}
+<div class="col-md-2">
+
+    <label for="status">
+        Status
+    </label>
+
+    <select
+        id="status"
+        name="status"
+        class="form-select"
+    >
+
+        <option value="">
+            All
+        </option>
+
+        <option
+            value="active"
+            {{ request('status') == 'active' ? 'selected' : '' }}
+        >
+            Active
+        </option>
+
+        <option
+            value="inactive"
+            {{ request('status') == 'inactive' ? 'selected' : '' }}
+        >
+            Inactive
+        </option>
+
+    </select>
+
+</div>
         </div>
         <div class="row mt-2">
             <div class="col-12 text-end">
@@ -78,91 +187,193 @@
                 <table class="table table-hover mb-0 align-middle">
                     <!-- Dark header row defining table columns -->
                     <thead class="table-dark">
+
                         <tr>
+
                             <th>Name</th>
-                            <th width="20%">Details</th>  <!-- Fixed width for details column -->
+
+                            <th width="18%">
+                                Details
+                            </th>
+
                             <th>Image</th>
+
                             <th>Size</th>
+
                             <th>Color</th>
+
                             <th>Category</th>
+
                             <th>Price (₹)</th>
-                            <th class="text-center">Actions</th>  <!-- Centered actions column -->
+
+                            <th>Stock</th>
+
+                            <th>Status</th>
+
+                            <th class="text-center">
+                                Actions
+                            </th>
+
                         </tr>
+
                     </thead>
 
-                    <tbody>
-                        <!-- Loop through $products collection passed from controller -->
-                        @forelse($products as $product)
-                            <!-- Individual product row -->
-                            <tr>
-                                <!-- Product name displayed as bold text -->
-                                <td class="fw-semibold">{{ $product->name }}</td>
+<tbody>
 
-                                <!-- Product details truncated to 60 characters with normal line wrapping -->
-                                <td style="white-space: normal;">
-                                    {{ Str::limit($product->details, 60) }}
-                                </td>
+@forelse($products as $product)
 
-                                <!-- SINGLE IMAGE DISPLAY with conditional rendering -->
-                                <td>
-                                    @if($product->image)
-                                        <!-- Show product image (70px width) if image path exists -->
-                                        <img src="{{ asset($product->image) }}" width="70" 
-                                             class="rounded shadow-sm border">
-                                    @else
-                                        <!-- Fallback text when no image available -->
-                                        <span class="text-muted">No Image</span>
-                                    @endif
-                                </td>
+    <tr>
 
-                                <!-- Simple text fields for product attributes -->
-                                <td>{{ $product->size }}</td>
-                                <td>{{ $product->color }}</td>
-                                <td>{{ $product->category }}</td>
+        <td class="fw-semibold">
+            {{ $product->name }}
+        </td>
 
-                                <!-- Formatted price with Indian Rupee symbol and green color -->
-                                <td class="fw-bold text-success">
-                                    ₹{{ number_format($product->price) }}
-                                </td>
 
-                                <!-- Action buttons column (Edit & Delete) - centered -->
-                                <td class="text-center">
-                                    <!-- Edit button linking to edit form with route model binding -->
-                                    <a href="{{ route('products.edit', $product) }}"
-                                       class="btn btn-warning btn-sm me-1">✏ Edit</a>
+        <td style="white-space: normal;">
+            {{ Str::limit($product->details, 60) }}
+        </td>
 
-                                    <!-- Delete form using POST method with DELETE spoofing -->
-                                    <form action="{{ route('products.destroy', $product) }}"
-                                          method="POST" class="d-inline">
-                                        @csrf  <!-- CSRF protection token -->
-                                        @method('DELETE')  <!-- Laravel method spoofing for DELETE -->
-                                        <!-- Delete button with JavaScript confirmation dialog -->
-                                        <button class="btn btn-danger btn-sm"
-                                                onclick="return confirm('Delete this product?')">
-                                            🗑 Delete
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
 
-                        @empty
-                            <!-- Empty state row when no products exist in database -->
-                            <tr>
-                                <td colspan="8" class="text-center py-4 text-muted">
-                                    No products found.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
+        <td>
+
+            @if($product->image)
+
+                <img
+                    src="{{ asset($product->image) }}"
+                    width="70"
+                    class="rounded shadow-sm border"
+                >
+
+            @else
+
+                <span class="text-muted">
+                    No Image
+                </span>
+
+            @endif
+
+        </td>
+
+
+        <td>
+            {{ $product->size }}
+        </td>
+
+
+        <td>
+            {{ $product->color }}
+        </td>
+
+
+        <td>
+            {{ $product->category }}
+        </td>
+
+
+        <td class="fw-bold text-success">
+            ₹{{ number_format($product->price, 2) }}
+        </td>
+
+
+        {{-- STOCK --}}
+        <td>
+
+            @if($product->stock > 0)
+
+                <span class="badge bg-success">
+                    {{ $product->stock }} Available
+                </span>
+
+            @else
+
+                <span class="badge bg-danger">
+                    Out of Stock
+                </span>
+
+            @endif
+
+        </td>
+
+
+        {{-- STATUS --}}
+        <td>
+
+            @if($product->is_active)
+
+                <span class="badge bg-primary">
+                    Active
+                </span>
+
+            @else
+
+                <span class="badge bg-secondary">
+                    Inactive
+                </span>
+
+            @endif
+
+        </td>
+
+
+        {{-- ACTIONS --}}
+        <td class="text-center">
+
+            <a
+                href="{{ route('products.edit', $product) }}"
+                class="btn btn-warning btn-sm me-1"
+            >
+                ✏ Edit
+            </a>
+
+
+            <form
+                action="{{ route('products.destroy', $product) }}"
+                method="POST"
+                class="d-inline"
+            >
+
+                @csrf
+
+                @method('DELETE')
+
+                <button
+                    class="btn btn-danger btn-sm"
+                    onclick="return confirm('Delete this product?')"
+                >
+                    🗑 Delete
+                </button>
+
+            </form>
+
+        </td>
+
+    </tr>
+
+@empty
+
+    <tr>
+
+        <td
+            colspan="10"
+            class="text-center py-4 text-muted"
+        >
+            No products found.
+        </td>
+
+    </tr>
+
+@endforelse
+
+</tbody>
                 </table>
             </div>
         </div>
     </div>
 
     {{-- PAGINATION LINKS --}}
-    <div class="mt-4">
-        {{ $products->links() }}
-    </div>
+<div class="mt-4">
+    {{ $products->links() }}
+</div>
 </div>
 @endsection
 

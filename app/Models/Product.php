@@ -2,20 +2,25 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'name',
         'details',
-        'image',    // single image store
         'price',
         'size',
         'color',
         'category',
+        'image',
+        'stock',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'price' => 'decimal:2',
+        'stock' => 'integer',
+        'is_active' => 'boolean',
     ];
 }
