@@ -1,34 +1,165 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CustomerProductsController;
+use Illuminate\Support\Facades\Route;
 
 
-// Product routes
+/*
+|--------------------------------------------------------------------------
+| Customer Products
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/customer/products',
+    [CustomerProductsController::class, 'index']
+)->name('customer.products');
+
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated Admin / Product Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware(['auth'])->group(function () {
-    Route::resource('products', ProductController::class);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Product Trash
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/products/trash',
+        [ProductController::class, 'trash']
+    )->name('products.trash');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Product Analytics
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/products/analytics',
+        [ProductController::class, 'analytics']
+    )->name('products.analytics');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Product CSV Export
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/products/export',
+        [ProductController::class, 'export']
+    )->name('products.export');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Restore Product
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post(
+        '/products/{id}/restore',
+        [ProductController::class, 'restore']
+    )->name('products.restore');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Permanent Delete
+    |--------------------------------------------------------------------------
+    */
+
+    Route::delete(
+        '/products/{id}/force-delete',
+        [ProductController::class, 'forceDelete']
+    )->name('products.force-delete');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Product CRUD
+    |--------------------------------------------------------------------------
+    */
+
+    Route::resource(
+        'products',
+        ProductController::class
+    );
 });
 
-// Customer product viewing route
-Route::get('/customer/products', [CustomerProductsController::class, 'index'])->name('customer.products');
 
-
+/*
+|--------------------------------------------------------------------------
+| Home
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', function () {
+
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+
+/*
+|--------------------------------------------------------------------------
+| Dashboard
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/dashboard',
+    [DashboardController::class, 'index']
+)
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+
+/*
+|--------------------------------------------------------------------------
+| Profile
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get(
+        '/profile',
+        [ProfileController::class, 'edit']
+    )->name('profile.edit');
+
+
+    Route::patch(
+        '/profile',
+        [ProfileController::class, 'update']
+    )->name('profile.update');
+
+
+    Route::delete(
+        '/profile',
+        [
+            ProfileController::class,
+            'destroy'
+        ]
+    )->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes
+|--------------------------------------------------------------------------
+*/
+
+require __DIR__ . '/auth.php';
